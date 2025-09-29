@@ -9,7 +9,7 @@ from player import menu
 class SpotifySonicHub(BaseSonicHub):
     """Reads from Spotify!"""
     MAX_RETURN = 10 # max number of any results to return
-    def __init__(self,name,client_id,client_secret):
+    def __init__(self,name,client_id,_client_secret):
         """Using the given client_id and client_secret create the spotify api so we can make web service calls!"""
         super().__init__(name)
         client_credentials_manager = SpotifyClientCredentials(client_id, client_secret)

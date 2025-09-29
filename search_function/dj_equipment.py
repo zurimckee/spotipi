@@ -52,7 +52,7 @@ class Track(SerializeMixin):
     def __str__(self):
         '''returns the formatted string version of the compiled information in this class'''
         if self.popularity != -1:
-            return f"{self.title} has popularity {self.popularity}"
+            return f"{self.title} by {self.artist.name} from album {self.album.title}"
         else:
             return f"{self.title}"
 
@@ -123,9 +123,9 @@ class Album(SerializeMixin):
     def __str__(self):
         '''returns the formatted string version of the compiled information in this class'''
         if self.release_date:
-            return f"{self.title} was released {self.release_date}"
+            return f"{self.title} by {self.artist.name}"
         else:
-            return f"{self.title} has {len(self.tracks)} tracks"
+            return f"{self.title}"
 
     
     def set_id(self, iD):
@@ -197,7 +197,7 @@ class Artist(SerializeMixin):
 
     def __str__(self):
         '''returns the formatted string version of the compiled information in this class'''
-        return f"{self.name} has {len(self.albums)} albums"
+        return f"{self.name}"
 
     def set_id(self, iD):
         '''takes a string as a parameter, most likely the album ID'''
