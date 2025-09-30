@@ -1,12 +1,13 @@
-import tkinter as tk
+from flask import Flask, render_template
+import json
 
-def main():
-    root = tk.Tk()
-    root.title("Music Player")
-    root.geometry("400x300")
-    label = tk.Label(root, text="Hi, welcome to the Music Player!", font=("Arial", 16))
-    label.pack(pady=20)
-    root.mainloop()
+from search_function import* 
+
+app = Flask(__name__)
+@app.route("/")
+
+def index():
+    return render_template("index.html")
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True) 
