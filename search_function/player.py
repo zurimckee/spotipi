@@ -18,8 +18,8 @@ def menu(sonic_hub):
                     print('\t',album)
                     print(f"\t\tListen here: {album.url}")
              else:
-                print("No albums not found.")
-        elif choice == 'artists'.title() or 'artist'.title():
+                print("No albums found.")
+        elif choice == 'Artists'.title() or 'Artist'.title():
             artist_name = input("Enter artist name to search: ")
             artists = sonic_hub.get_artists_by_name(artist_name)
             if artists:
@@ -28,8 +28,8 @@ def menu(sonic_hub):
                     print('\t',artist)
                     print(f"\t\tListen here: {artist.url}")
             else:
-                print("No artists not found.")
-        elif choice == 'songs'.title() or 'song'.title():
+                print("No artists found.")
+        elif choice == 'Songs'.title() or 'Song'.title():
              track_title = input("Enter track title to search: ")
              tracks = sonic_hub.get_tracks_by_title(track_title)
              if tracks:
@@ -38,8 +38,8 @@ def menu(sonic_hub):
                     print('\t',track)
                     print(f"\t\tListen here: {track.url}")
              else:
-                print("No tracks not found.")
-        elif choice == 'exit'.lower():
+                print("No tracks found.")
+        elif choice == 'Exit'.lower():
             print("Exiting program.")
             break
         else:

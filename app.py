@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 import json
 
+
 from search_function import* 
 
 app = Flask(__name__)

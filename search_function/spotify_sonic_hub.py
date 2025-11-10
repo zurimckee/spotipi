@@ -1,13 +1,18 @@
+import os
+import sys
+from dotenv import load_dotenv
 from dj_equipment import Artist,Album,Track
 from hubs import BaseSonicHub
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-import sys
-from player import menu
-
 
 class SpotifySonicHub(BaseSonicHub):
-    """Reads from Spotify!"""
+    def __init__(self, name, client_id, client_secret):
+        """Using the given client_id and client_secret create the spotify api so we can make web service calls!"""
+        super().__init__(name)
+        # ensure the correct variables are passed to the credentials manager
+        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+        self.spotify_api = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
     MAX_RETURN = 10 # max number of any results to return
     def __init__(self,name,client_id,_client_secret):
         """Using the given client_id and client_secret create the spotify api so we can make web service calls!"""
@@ -111,15 +116,19 @@ if __name__ == "__main__":
     If they are missing, the user will be prompted for them. 
     """
     try:
-        client_id = 'c7e1d7b3540f4d9287407c5a47b450b7'
-        client_secret = 'a6a75e851e5a4cd59ae05d69c1c6f029'
+
+        load_dotenv()
+        client_id = os.getenv('SPOTIPY_CLIENT_ID')
+        client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
+
+        '''
 
 
         #if (len(sys.argv) > 2):
             #client_id = sys.argv[1]
             #client_secret = sys.argv[2]
             #print("Looks like we got the client_id and client_secret from the sys args. Cool")
-        '''
+        
         else:
             print("No arguments passed in so I must ask...")
             client_id = input("Client Id: ")
