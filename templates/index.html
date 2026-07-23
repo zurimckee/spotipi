@@ -3,22 +3,20 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title> spotipi gui</title>
+        <title> tuneup </title>
         <link rel="stylesheet" href="/static/styles.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-
         <script src="/static/script.js" defer></script>
-        <script src="app.py" defer></script>
     </head>
 <body>
   <div class="player">
 
     <!-- Define the section for displaying details -->
     <div class="details">
-      <div class="now-playing">PLAYING x OF y</div>
+      <div class="now-playing">playing x of y</div>
       <div class="track-art"></div>
-      <div class="track-name">Track Name</div>
-      <div class="track-artist">Track Artist</div>
+      <div class="track-name">track name</div>
+      <div class="track-artist">track artist</div>
     </div>
 
     <!-- Define the section for displaying track buttons -->
@@ -37,8 +35,7 @@
     <!-- Define the section for displaying the seek slider-->
     <div class="slider_container">
       <div class="current-time">00:00</div>
-      <input type="range" min="1" max="100"
-        value="0" class="seek_slider" onchange="seekTo()">
+      <input type="range" min="1" max="100" value="0" class="seek_slider" onchange="seekTo()">
       <div class="total-duration">00:00</div>
     </div>
 
@@ -50,5 +47,5 @@
       <i class="fa fa-volume-up"></i>
     </div>
   </div>
-        <script src="/static/script.js"></script>
-    </body>
+  </body>
+</html>

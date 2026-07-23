@@ -1,12 +1,13 @@
-from dotenv import load_dotenv
-load_dotenv()
 
 import os
 import sqlite3
 import boto3
-from mutagen.mp3 import MP3
+from mutagen.id3 import ID3
 from datetime import datetime, timezone
 import tempfile
+
+from dotenv import load_dotenv
+load_dotenv()
 
 R2_BUCKET = os.environ["R2_BUCKET"]
 INDEX_KEY = "library_index.db"
@@ -105,23 +106,57 @@ def rebuild_index():
     print("Index rebuilt and uploaded to R2.")
 
 
+BITRATE_BPS = 320_000  # matches your ffmpeg -b:a 320k conversion setting
+
+def _get_id3_tag_size(key):
+    """Reads just the 10-byte ID3v2 header to determine the actual tag size,
+    so we know exactly how many bytes to fetch — handles large embedded art."""
+    header_obj = s3.get_object(Bucket=R2_BUCKET, Key=key, Range="bytes=0-9")
+    header = header_obj["Body"].read()
+
+    if header[:3] != b"ID3":
+        return 262144  # not a valid ID3v2 header — fall back to default guess
+
+    # ID3v2 size is stored as a 4-byte "synchsafe" integer (7 bits used per byte)
+    size_bytes = header[6:10]
+    tag_size = (
+        (size_bytes[0] << 21) | (size_bytes[1] << 14) |
+        (size_bytes[2] << 7) | size_bytes[3]
+    )
+    return tag_size + 10  # +10 for the header itself
+
 def _index_track(conn, key, filesize):
-    """Downloads a single file to /tmp just long enough to read its tags,
-    then discards it. We only need metadata, not the audio itself."""
+    """Fetches just the first chunk of the file to read ID3 tags,
+    instead of downloading the entire track. """
     tmp_path = os.path.join(tempfile.gettempdir(), "_tag_scan.mp3")
-    s3.download_file(R2_BUCKET, key, tmp_path)
+    tag_size = _get_id3_tag_size(key)
+    range_end = min(tag_size, filesize - 1)
+
+
+    obj = s3.get_object(Bucket=R2_BUCKET, Key=key, Range=f"bytes=0-{range_end}")
+    with open(tmp_path, "wb") as f:
+        f.write(obj["Body"].read())
+
+
+    '''range_end = min(262143, filesize - 1)
+    obj = s3.get_object(
+        Bucket=R2_BUCKET, Key=key,
+        Range=f"bytes=0-{range_end}"
+    )'''
 
     try:
-        audio = MP3(tmp_path)
-        tags = audio.tags or {}
+        tags = ID3(tmp_path)
         title = str(tags.get("TIT2", key.split("/")[-1]))
         artist = str(tags.get("TPE1", "Unknown Artist"))
         album = str(tags.get("TALB", "Unknown Album"))
         track_number = str(tags.get("TRCK", "0")).split("/")[0]
-        duration = audio.info.length
     except Exception as e:
-        print(f"Failed to read tags for {key}: {e}")
-        title, artist, album, track_number, duration = key, "Unknown", "Unknown", 0, 0
+        print(f"Failed to read tags for {key}: {type(e).__name__}: {e}")
+        title, artist, album, track_number = key, "Unknown", "Unknown", 0
+
+    # Estimate duration from filesize and known constant bitrate.
+    # duration (seconds) = (filesize in bits) / (bitrate in bits per second)
+    duration = (filesize * 8) / BITRATE_BPS
 
     conn.execute(
         """INSERT OR REPLACE INTO tracks
@@ -132,3 +167,7 @@ def _index_track(conn, key, filesize):
     )
 
     os.remove(tmp_path)
+
+if __name__ == "__main__":
+    rebuild_index()
+    print("Done.")
