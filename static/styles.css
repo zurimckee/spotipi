@@ -24,13 +24,11 @@ body {
 }
 
 .track-art {
-  margin: 25px;
   height: 250px;
   width: 250px;
-  background-image: URL("/assets/download.jpg");
   background-size: cover;
   background-position: center;
-  border-radius: 15%;
+  border-radius: 8px;
 }
 
 /* Changing the font sizes to suitable ones */

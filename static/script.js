@@ -18,19 +18,34 @@ let updateTimer;
 
 let curr_track = document.createElement('audio')
 
+let track_list = [];
+
+
+async function fetchLibrary() {
+    const res = await fetch("/library?limit=500");
+    const data = await res.json();
+    track_list = data.results;
+
+    if (track_list.length > 0) {
+        loadTrack(track_index);
+    }
+}
+
 function loadTrack(track_index){
     clearInterval(updateTimer);
     resetValues();
 
-    const track = track_list[index]
+    const track = track_list[track_index]
     if (!track) return;
 
     curr_track.src = `/stream/${track.id}`;
     curr_track.load()
 
+    track_art.style.backgroundImage = `url('/art/${track.id}')`;
+
     track_name.textContent = track.title;
     track_artist.textContent = track.artist;
-    now_player.textContent = `playing ${index + 1} of ${track_list.length}`;
+    now_player.textContent = `playing ${track_index + 1} of ${track_list.length}`;
 
     updateTimer = setInterval(seekUpdate, 1000);
 

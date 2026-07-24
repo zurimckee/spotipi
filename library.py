@@ -24,8 +24,18 @@ s3 = boto3.client(
 
 
 def load_index():
+    temp_download_path = LOCAL_DB_PATH + ".downloading"
+
     try:
-        s3.download_file(R2_BUCKET, INDEX_KEY, LOCAL_DB_PATH)
+        if os.path.exists(temp_download_path):
+            os.remove(temp_download_path)
+
+        s3.download_file(R2_BUCKET, INDEX_KEY, temp_download_path)
+
+        if os.path.exists(LOCAL_DB_PATH):
+            os.remove(LOCAL_DB_PATH)
+        os.replace(temp_download_path, LOCAL_DB_PATH)
+
         print("Loaded existing index from R2.")
     except s3.exceptions.ClientError:
         print("No index found in R2 — building one now.")
@@ -38,10 +48,14 @@ def rebuild_index():
     """Scans the whole bucket, extracts tags with mutagen, writes a fresh
     SQLite file, and uploads it back to R2. Only call this on first run
     or when you explicitly want to re-scan (e.g. after adding new music)."""
-    if os.path.exists(LOCAL_DB_PATH):
-        os.remove(LOCAL_DB_PATH)
+    temp_build_path = LOCAL_DB_PATH + ".building"
 
-    conn = sqlite3.connect(LOCAL_DB_PATH)
+    if os.path.exists(temp_build_path):
+        os.remove(temp_build_path)
+
+    
+
+    conn = sqlite3.connect(temp_build_path)
     conn.execute("""
         CREATE TABLE tracks (
             id INTEGER PRIMARY KEY,
@@ -55,6 +69,8 @@ def rebuild_index():
             date_added TEXT
         )
     """)
+
+
     #for fuzzy searching
     conn.execute("""
     CREATE VIRTUAL TABLE tracks_fts USING fts5(
@@ -86,10 +102,9 @@ def rebuild_index():
         END
     """)
 
-
-
     conn.execute("CREATE INDEX idx_artist ON tracks(artist)")
     conn.execute("CREATE INDEX idx_album ON tracks(album)")
+
 
     paginator = s3.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=R2_BUCKET):
@@ -102,8 +117,14 @@ def rebuild_index():
     conn.commit()
     conn.close()
 
-    s3.upload_file(LOCAL_DB_PATH, R2_BUCKET, INDEX_KEY)
+    s3.upload_file(temp_build_path, R2_BUCKET, INDEX_KEY)
+
+    if os.path.exists(LOCAL_DB_PATH):
+        os.remove(LOCAL_DB_PATH)
+    os.replace(temp_build_path, LOCAL_DB_PATH)
+
     print("Index rebuilt and uploaded to R2.")
+
 
 
 BITRATE_BPS = 320_000  # matches your ffmpeg -b:a 320k conversion setting
