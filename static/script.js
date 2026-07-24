@@ -12,6 +12,12 @@ let volume_slider = document.querySelector(".volume-slider")
 let curr_time = document.querySelector(".current-time")
 let total_duration = document.querySelector(".total-duration")
 
+let search_input = document.querySelector(".search-input");
+let search_results_view = document.querySelector(".search-results");
+let results_list = document.querySelector(".results-list");
+let player_view = document.querySelector(".player");
+
+
 let track_index = 0;
 let isPlaying = false;
 let updateTimer;
@@ -20,6 +26,53 @@ let curr_track = document.createElement('audio')
 
 let track_list = [];
 
+
+search_input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const query = search_input.value.trim();
+        if (query) searchLibrary(query);
+    }
+});
+
+async function searchLibrary(query) {
+    const res = await fetch(`/library?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    const results = data.results;
+
+    results_list.innerHTML = "";
+
+    if (results.length === 0) {
+        results_list.innerHTML = `<li class="no-results">no results for "${query}"</li>`;
+    } else {
+        results.forEach((track, i) => {
+            const li = document.createElement("li");
+            li.className = "result-item";
+            li.innerHTML = `<span class="result-title">${track.title}</span> — <span class="result-artist">${track.artist}</span>`;
+            li.onclick = () => playFromResults(results, i);
+            results_list.appendChild(li);
+        });
+    }
+
+    showSearchResults();
+}
+
+function playFromResults(results, index) {
+    track_list = results;
+    track_index = index;
+    loadTrack(track_index);
+    playTrack();
+    closeSearchResults();
+}
+
+function showSearchResults() {
+    search_results_view.style.display = "block";
+    player_view.style.display = "none";
+}
+
+function closeSearchResults() {
+    search_results_view.style.display = "none";
+    player_view.style.display = "block";
+}
 
 async function fetchLibrary() {
     const res = await fetch("/library?limit=500");
