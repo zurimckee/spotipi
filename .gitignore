@@ -1,5 +1,7 @@
 .venv
-*/pycache__/
+pycache/
+*.pyc
+.cache
 tmp
 .cache
 .env
