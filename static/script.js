@@ -62,8 +62,51 @@ function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("open");
 }
 
-function renderSidebar() {
+async function renderSidebar() {
     sidebar_list.innerHTML = "";
+
+    // --- Downloads section ---
+    const downloadedTracks = await getDownloadedTracks();
+
+    const downloadsHeader = document.createElement("li");
+    downloadsHeader.className = "sidebar-album-header";
+    downloadsHeader.innerHTML = `<span class="album-arrow">▶</span> downloads <span class="album-count">(${downloadedTracks.length})</span>`;
+
+    const downloadsGroup = document.createElement("li");
+    downloadsGroup.className = "sidebar-album-tracks collapsed";
+
+    const downloadsInner = document.createElement("ul");
+    downloadsInner.className = "sidebar-album-tracks-inner";
+
+    if (downloadedTracks.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "sidebar-item no-downloads";
+        empty.innerHTML = `<span class="sidebar-title">no downloads yet</span>`;
+        downloadsInner.appendChild(empty);
+    } else {
+        downloadedTracks.forEach(track => {
+            const li = document.createElement("li");
+            li.className = "sidebar-item";
+            li.innerHTML = `<span class="sidebar-title">${track.title}</span><span class="sidebar-artist">${track.artist}</span>`;
+            li.onclick = () => {
+                track_index = track.originalIndex;
+                loadTrack(track_index);
+                playTrack();
+            };
+            downloadsInner.appendChild(li);
+        });
+    }
+
+    downloadsGroup.appendChild(downloadsInner);
+
+    downloadsHeader.onclick = () => {
+        downloadsGroup.classList.toggle("collapsed");
+        const arrow = downloadsHeader.querySelector(".album-arrow");
+        arrow.textContent = downloadsGroup.classList.contains("collapsed") ? "▶" : "▼";
+    };
+
+    sidebar_list.appendChild(downloadsHeader);
+    sidebar_list.appendChild(downloadsGroup);
 
     const folders = {};
     track_list.forEach((track, i) => {
@@ -160,7 +203,7 @@ function showSearchResults() {
 
 function closeSearchResults() {
     search_results_view.style.display = "none";
-    player_view.style.display = "block";
+    player_view.style.display = "flex";
 }
 
 async function fetchLibrary() {
@@ -178,7 +221,7 @@ async function fetchLibrary() {
         }
 
         loadTrack(track_index);
-        renderSidebar();
+        await renderSidebar();
 
         if (saved) {
             // Restore volume and seek position once metadata is available
@@ -216,6 +259,8 @@ function loadTrack(track_index){
     track_artist.textContent = track.artist;
     now_player.textContent = `playing ${track_index + 1} of ${track_list.length}`;
 
+    updateMediaSession(track); 
+
     updateTimer = setInterval(seekUpdate, 1000);
 
     curr_track.addEventListener("loadedmetadata", () => {
@@ -224,6 +269,7 @@ function loadTrack(track_index){
     });
 
     curr_track.addEventListener("ended", nextTrack);
+    updateOfflineIcon(track.id);  
 }
 
 function toggleShuffle() {
@@ -297,12 +343,14 @@ function playTrack() {
     curr_track.play();
     isPlaying = true;
     playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
 }
 
 function pauseTrack() {
     curr_track.pause();
     isPlaying = false;
     playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
 }
 
 function seekTo() {
@@ -326,6 +374,125 @@ function formatTime(seconds) {
     const s = Math.floor(seconds % 60);
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
+
+
+function updateMediaSession(track) {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.title,
+        artist: track.artist,
+        album: track.album,
+        artwork: [
+            { src: `/art/${track.id}`, sizes: '512x512', type: 'image/jpeg' }
+        ]
+    });
+    navigator.mediaSession.setActionHandler('play', () => playTrack());
+    navigator.mediaSession.setActionHandler('pause', () => pauseTrack());
+    navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+    navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined) {
+            curr_track.currentTime = details.seekTime;
+            savePlayerState();
+        }
+    });
+}
+
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch((err) => {
+            console.warn("Service worker registration failed:", err);
+        });
+    });
+}
+
+function saveTrackOffline(trackId) {
+    if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: "CACHE_TRACK",
+            trackId: trackId,
+        });
+    }
+}
+
+async function isTrackCached(trackId) {
+    const cache = await caches.open("tuneup-audio-v1");
+    const match = await cache.match(`/stream/${trackId}`);
+    return !!match;
+}
+
+async function toggleOfflineForCurrentTrack() {
+    const track = track_list[track_index];
+    if (!track) return;
+
+    const cached = await isTrackCached(track.id);
+
+    if (cached) {
+        const cache = await caches.open("tuneup-audio-v1");
+        await cache.delete(`/stream/${track.id}`);
+        showToast(`Removed "${track.title}" from downloads`);
+    } else {
+        saveTrackOffline(track.id);
+        showToast(`Downloading "${track.title}"...`);
+    }
+
+    updateOfflineIcon(track.id);
+    await renderSidebar();
+}
+
+async function updateOfflineIcon(trackId) {
+    const cached = await isTrackCached(trackId);
+    const icon = document.querySelector(".save-offline i");
+    icon.className = cached ? "fa fa-check-circle" : "fa fa-download";
+}
+
+function showToast(message) {
+    const existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data?.type === "TRACK_CACHED") {
+            showToast("saved for offline listening");
+            updateOfflineIcon(event.data.trackId);
+        }
+    });
+}
+
+
+async function getDownloadedTracks() {
+    const cache = await caches.open("tuneup-audio-v1");
+    const requests = await cache.keys();
+
+    // requests are full URLs like ".../stream/42" — extract the track id from each
+    const cachedIds = requests.map(req => {
+        const match = req.url.match(/\/stream\/(\d+)/);
+        return match ? parseInt(match[1], 10) : null;
+    }).filter(id => id !== null);
+
+    // Match cached ids back to full track objects (with metadata) from track_list
+    return track_list
+        .map((track, i) => ({ ...track, originalIndex: i }))
+        .filter(track => cachedIds.includes(track.id));
+}
+
+
+
+
 
 // Kick things off once the page loads
 document.addEventListener("DOMContentLoaded", fetchLibrary);

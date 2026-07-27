@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response, stream_with_context, render_template
+from flask import Flask, request, jsonify, Response, stream_with_context, render_template, send_from_directory
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -87,6 +87,12 @@ def stream(track_id):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/sw.js")
+def service_worker():
+    response = send_from_directory("static", "sw.js", mimetype="application/javascript")
+    response.headers["Service-Worker-Allowed"] = "/"
+    return response
 
 @app.route("/art/<int:track_id>")
 def album_art(track_id):
