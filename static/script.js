@@ -23,7 +23,6 @@ let shuffle_position = 0;    // where we are within shuffle_order
 
 let shuffle_btn = document.querySelector(".shuffle-track");
 
-
 let track_index = 0;
 let isPlaying = false;
 let updateTimer;
@@ -31,6 +30,7 @@ let updateTimer;
 let curr_track = document.createElement('audio')
 
 let track_list = [];
+let full_library = [];
 
 const STORAGE_KEY = "tuneup_state";
 
@@ -87,6 +87,7 @@ async function renderSidebar() {
             li.className = "sidebar-item";
             li.innerHTML = `<span class="sidebar-title">${track.title}</span><span class="sidebar-artist">${track.artist}</span>`;
             li.onclick = () => {
+                track_list = full_library;
                 track_index = track.originalIndex;
                 loadTrack(track_index);
                 playTrack();
@@ -208,6 +209,7 @@ async function fetchLibrary() {
     const res = await fetch("/library?limit=500");
     const data = await res.json();
     track_list = data.results;
+    full_library = [...track_list];
 
     if (track_list.length > 0) {
         const saved = loadPlayerState();

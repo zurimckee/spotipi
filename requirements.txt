@@ -4,3 +4,4 @@ boto3
 mutagen
 python-dotenv
 gevent
+gunicorn
