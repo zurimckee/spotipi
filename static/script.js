@@ -8,7 +8,6 @@ let next_btn = document.querySelector(".next-track")
 let prev_btn = document.querySelector(".prev-track")
 
 let seek_slider = document.querySelector(".seek-slider")
-let volume_slider = document.querySelector(".volume-slider")
 let curr_time = document.querySelector(".current-time")
 let total_duration = document.querySelector(".total-duration")
 
@@ -39,7 +38,6 @@ const STORAGE_KEY = "tuneup_state";
 function savePlayerState() {
     const state = {
         track_index: track_index,
-        volume: curr_track.volume,
         currentTime: curr_track.currentTime,
         isShuffled: isShuffled,
     };
@@ -224,22 +222,16 @@ async function fetchLibrary() {
         await renderSidebar();
 
         if (saved) {
-            // Restore volume and seek position once metadata is available
+            // Restore seek position once metadata is available
             curr_track.addEventListener("loadedmetadata", () => {
-                if (saved.volume !== undefined) {
-                    curr_track.volume = saved.volume;
-                    volume_slider.value = saved.volume * 100;
-                }
                 if (saved.currentTime) {
                     curr_track.currentTime = saved.currentTime;
                     seek_slider.value = Math.floor(saved.currentTime);
                     curr_time.textContent = formatTime(saved.currentTime);
                 }
             }, { once: true });
-        } else {
-            // No saved state — still respect a sensible default volume
-            curr_track.volume = 0.99;
         }
+
     }
 }
 
@@ -361,11 +353,6 @@ function seekTo() {
 function seekUpdate() {
     seek_slider.value = Math.floor(curr_track.currentTime);
     curr_time.textContent = formatTime(curr_track.currentTime);
-    savePlayerState();
-}
-
-function setVolume() {
-    curr_track.volume = volume_slider.value / 100;
     savePlayerState();
 }
 

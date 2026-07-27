@@ -30,7 +30,7 @@ body {
   height: 100vh;
   overflow-y: auto;
   background-color: #E0E1DD;
-  border-right: 1px solid #1B263B;
+  border-right: 1px solid #778DA9;
   transform: translateX(-100%);
   transition: transform 0.25s ease;
   z-index: 1000;
@@ -45,7 +45,7 @@ body {
   font-size: 1.2rem;
   font-weight: bold;
   padding: 16px;
-  border-bottom: 1px solid #0D1B2A;
+  border-bottom: 1px solid #778DA9;
 }
 
 .sidebar-album-header {
@@ -54,7 +54,7 @@ body {
   font-size: 0.9rem;
   cursor: pointer;
   background-color: #E0E1DD;
-  border-bottom: 1px solid #0D1B2A;
+  border-bottom: 1px solid #778DA9;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -76,21 +76,33 @@ body {
   margin-left: auto;
 }
 
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  cursor: pointer;
+}
+
+.sidebar.open + .sidebar-overlay {
+  display: block;
+}
+
 .sidebar-album-tracks {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition: grid-template-rows 0.2s ease;
+  overflow: hidden;
+  max-height: 2000px;
+  transition: max-height 0.3s ease;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .sidebar-album-tracks.collapsed {
-  grid-template-rows: 0fr;
+  max-height: 0;
+  transition: max-height 0.2s ease;
 }
 
 .sidebar-album-tracks-inner {
-  overflow: hidden;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -107,7 +119,7 @@ body {
   flex-direction: column;
   padding: 10px 16px;
   cursor: pointer;
-  border-bottom: 1px solid #0D1B2A;
+  border-bottom: 1px solid #778DA9;
   padding-left: 28px; 
 }
 
@@ -213,13 +225,12 @@ body {
 /* Using flex with the column direction to
    align items in a vertical direction */
 .player {
-  background-color: #f5f5f0;
   height: 95vh;
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  border: solid 3px #778DA9;
+  border: none;
   border-radius: 12px;
   width: fit-content;
   margin: 20px;
@@ -302,7 +313,7 @@ body {
 }
 
 /* Modify the appearance of the slider */
-.seek-slider, .volume-slider {
+.seek-slider {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -314,8 +325,7 @@ body {
 }
 
 /* Modify the appearance of the slider thumb */
-.seek-slider::-webkit-slider-thumb,
-.volume-slider::-webkit-slider-thumb {
+.seek-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -327,8 +337,7 @@ body {
 }
 
 /* Change the opacity when mouse is hovered */
-.seek-slider:hover,
-.volume-slider:hover {
+.seek-slider:hover {
   opacity: 1.0;
 }
 
@@ -336,19 +345,11 @@ body {
   width: 60%;
 }
 
-.volume-slider {
-  width: 30%;
-}
-
 .current-time,
 .total-duration {
   padding: 10px;
 }
 
-i.fa-volume-down,
-i.fa-volume-up {
-  padding: 10px;
-}
 
 /* Change the mouse cursor to a pointer
    when hovered over */

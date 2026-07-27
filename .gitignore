@@ -2,6 +2,7 @@
 pycache/
 *.pyc
 .cache
+__pycache__
 tmp
 .cache
 .env
