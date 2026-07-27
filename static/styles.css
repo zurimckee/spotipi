@@ -70,7 +70,7 @@ body {
 }
 
 .album-count {
-  color: #E0E1DD;
+  color: #778DA9;
   font-weight: normal;
   font-size: 0.8rem;
   margin-left: auto;
@@ -89,20 +89,20 @@ body {
 }
 
 .sidebar-album-tracks {
-  overflow: hidden;
-  max-height: 2000px;
-  transition: max-height 0.3s ease;
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.2s ease;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .sidebar-album-tracks.collapsed {
-  max-height: 0;
-  transition: max-height 0.2s ease;
+  grid-template-rows: 0fr;
 }
 
 .sidebar-album-tracks-inner {
+  overflow: hidden;
   list-style: none;
   padding: 0;
   margin: 0;
