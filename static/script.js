@@ -268,7 +268,7 @@ function loadTrack(track_index){
         seek_slider.max = Math.floor(curr_track.duration)
     });
 
-    curr_track.addEventListener("ended", nextTrack);
+    curr_track.onended = nextTrack;
     updateOfflineIcon(track.id);  
 }
 
