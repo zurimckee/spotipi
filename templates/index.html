@@ -21,9 +21,13 @@
     <script src="/static/script.js" defer></script>
   </head>
   <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
     <div class="sidebar">
-        <div class="sidebar-header">library</div>
+        <div class="sidebar-header">catalog</div>
         <ul class="sidebar-list"></ul>
     </div>
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -32,7 +36,9 @@
         <input type="text" class="search-input" placeholder="search songs, artists, albums...">
       </div>
       <div class="search-results" style="display: none;">
-        <button class="back-btn" onclick="closeSearchResults()">back</button>
+        <button class="back-btn" onclick="closeSearchResults()">
+          <i class="fa fa-home"></i>
+        </button>
         <ul class="results-list"></ul>
       </div>
     
@@ -70,6 +76,14 @@
         <div class="current-time">00:00</div>
           <input type="range" min="1" max="100" value="0" class="seek-slider" onchange="seekTo()">
           <div class="total-duration">00:00</div>
+        </div>
+      </div>
+      <div class="queue-container">
+        <div class="queue-header" onclick="toggleQueue()">
+          <span class="queue-arrow">▶</span> up next
+        </div>
+        <div class="queue-list collapsed">
+          <ul class="queue-list-inner"></ul>
         </div>
       </div>
     </div>
